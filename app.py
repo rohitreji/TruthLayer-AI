@@ -47,26 +47,6 @@ with st.sidebar:
     """, unsafe_allow_html=True)
     
     st.markdown("---")
-    st.subheader("🔑 API Configuration")
-    
-    secrets_gemini = st.secrets.get("GEMINI_API_KEY", "") if hasattr(st, "secrets") else ""
-    secrets_tavily = st.secrets.get("TAVILY_API_KEY", "") if hasattr(st, "secrets") else ""
-    
-    gemini_key = st.text_input(
-        "Google Gemini API Key",
-        value=os.environ.get("GEMINI_API_KEY", secrets_gemini),
-        type="password",
-        help="Required for claim extraction and validation. Get one from Google AI Studio."
-    )
-    
-    tavily_key = st.text_input(
-        "Tavily API Key (Optional Fallback)",
-        value=os.environ.get("TAVILY_API_KEY", secrets_tavily),
-        type="password",
-        help="Used as a backup search engine if DuckDuckGo encounters rate limits or blocks."
-    )
-    
-    st.markdown("---")
     st.subheader("⚙️ Verification Settings")
     
     max_claims = st.slider(
