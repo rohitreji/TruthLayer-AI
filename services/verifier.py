@@ -9,10 +9,10 @@ def verify_claim(claim: str, evidence: List[Dict[str, str]], api_key: str, model
         
     if not evidence:
         return {
-            "status": "FALSE",
-            "reason": "No live web search results could be retrieved to verify this claim.",
-            "correct_fact": "No search evidence available.",
-            "confidence": 10
+            "status": "INACCURATE",
+            "reason": "Limited search results available for verification. Could not confirm or deny the claim with available evidence.",
+            "correct_fact": "",
+            "confidence": 20
         }
         
     evidence_items = []
@@ -39,9 +39,9 @@ def verify_claim(claim: str, evidence: List[Dict[str, str]], api_key: str, model
     prompt = f"""You are a professional fact-checker specializing in high-precision audit verification. Your task is to compare the provided factual CLAIM against the LIVE WEB EVIDENCE collected below.
 
 Categorize the claim into one of these three states:
-1. "VERIFIED": The live web evidence explicitly and accurately supports the claim without any significant discrepancies.
-2. "INACCURATE": The claim is partially correct, but contains errors regarding numbers, dates, percentages, names, or general context (e.g. claiming "50% growth" when the evidence states "40% growth").
-3. "FALSE": The claim is fundamentally incorrect, contradicted by the live web evidence, or fabricated.
+1. "VERIFIED": The live web evidence substantially supports the core fact of the claim. Minor wording differences are acceptable. The main claim is accurate.
+2. "INACCURATE": The claim contains some truth but has specific errors in numbers, dates, names, or key details (e.g., date is off by a year, number is significantly different).
+3. "FALSE": The claim is fundamentally wrong or directly contradicted by reliable evidence.
 
 CLAIM:
 "{claim}"
@@ -52,19 +52,22 @@ LIVE WEB EVIDENCE:
 ---
 
 INSTRUCTIONS:
-- Analyze numbers, statistics, percentages, dates, and names with absolute precision.
-- If there is conflicting information, prioritize highly authoritative and recent sources from the evidence list.
-- In "correct_fact", write the specific, corrected factual statement if the status is INACCURATE or FALSE. If the status is VERIFIED, set "correct_fact" to empty.
-- In "reason", write a concise, highly professional explanation of your decision. Specify WHICH sources (e.g., "[1]", "[2]") support or contradict the claim. Explain discrepancies in numbers or dates clearly.
-- In "confidence", output a confidence score from 0 to 100 indicating the strength and alignment of the evidence.
+- Focus on the CORE FACT of the claim, not exact wording matches.
+- If evidence supports the main assertion (even with different phrasing), mark as VERIFIED.
+- Only mark FALSE if evidence directly contradicts the claim or shows it's false.
+- For numerical claims: if numbers are within 5% or context is similar, consider it VERIFIED.
+- For date claims: exact year match = VERIFIED, off by 1-2 years = INACCURATE, off by 3+ years = FALSE.
+- In "correct_fact", write the specific corrected statement ONLY if status is INACCURATE or FALSE. Leave empty for VERIFIED.
+- In "reason", cite specific sources (e.g., "[1]", "[2]") that support or contradict the claim.
+- In "confidence", output 0-100 reflecting your certainty (higher = more certain).
 
 You MUST return a strictly valid JSON object with exactly these keys:
 - "status": Must be one of "VERIFIED", "INACCURATE", or "FALSE".
-- "reason": Clear, professional reasoning.
-- "correct_fact": The corrected factual statement or empty string.
+- "reason": Clear, professional reasoning with source citations.
+- "correct_fact": The corrected factual statement or empty string if VERIFIED.
 - "confidence": Integer between 0 and 100.
 
-Do not include any chat prefix, suffix, or markdown code blocks. Return ONLY raw JSON.
+Return ONLY raw JSON with no markdown, code blocks, or extra text.
 """
 
     try:
